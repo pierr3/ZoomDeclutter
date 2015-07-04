@@ -91,7 +91,7 @@ void CZoomClutterRadarScreen::OnAsrContentLoaded(bool Loaded) {
 			element.IsValid();
 			element = GetPlugIn()->SectorFileElementSelectNext(element, ElementType))
 		{
-			string element_name = element.GetComponentName(0);
+			string element_name = element.GetName();
 
 			if (name.compare(element_name))
 				ZoomData.insert(std::pair<int, CSectorElement>(level, element)); break;
