@@ -27,15 +27,20 @@ public:
 
 	inline virtual bool OnCompileCommand(const char * sCommandLine);
 
+	//---startsWith-----------------------------------------
+
+	inline virtual bool startsWith(const char *pre, const char *str)
+	{
+		size_t lenpre = strlen(pre), lenstr = strlen(str);
+		return lenstr < lenpre ? false : strncmp(pre, str, lenpre) == 0;
+	};
+
 	inline virtual void OnAsrContentToBeClosed(void) {
 		delete this;
 	};
-
-protected:
-
+	
 	multimap<int, CSectorElement> ZoomData;
-
-	CPosition saveBottomLeft;
-
+	multimap<int, CSectorElement> CurrentlyDrawn;
+	int saveLevel = 0;
 };
 

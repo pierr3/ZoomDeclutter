@@ -21,80 +21,82 @@ vector<string> split(const string &s, char delim) {
 }
 
 void CZoomClutterRadarScreen::OnAsrContentLoaded(bool Loaded) {
-	if (!Loaded)
-		return;
-
 	ZoomData.clear();
-	string base_name = "ZOOM";
 	const char * raw_data;
+	CString str;
+	
+	GetPlugIn()->SelectActiveSectorfile();
 
 	// We loop through each entry in the ASR
-	for (int i = 1; ; ++i)
+	for (int i = 1; ; i++)
 	{
-		string item_name = base_name + std::to_string(i);
+		// variable name
+		str.Format("ZOOM%d", i);
 
-		if ((raw_data = GetDataFromAsr(item_name.c_str())) == NULL)
+		// get it from ASR
+		if ((raw_data = GetDataFromAsr(str)) == NULL)
 			break;
 
-		// Each line is formated this way "(ZOOM%ID):TYPE;NAME;LEVEL"
-		vector<string> data = split(string(raw_data), ';');
+		// Each line is formated this way "(ZOOM%ID):TYPE:NAME:LEVEL"
+		vector<string> data = split(string(raw_data), ':');
 
 		string type = data.at(0);
 		string name = data.at(1);
-		int level = std::stoi(data.at(3));
+		int level = atoi(data.at(2).c_str());
 
 		int ElementType = EuroScopePlugIn::SECTOR_ELEMENT_ALL;
 
-		if (type.compare("GEO"))
+		if (startsWith("GEO", type.c_str()))
 			ElementType = EuroScopePlugIn::SECTOR_ELEMENT_GEO;
-		if (type.compare("AIRPORT"))
+		if (startsWith("AIRPORT", type.c_str()))
 			ElementType = EuroScopePlugIn::SECTOR_ELEMENT_AIRPORT;
-		if (type.compare("AIRSPACE"))
+		if (startsWith("AIRSPACE", type.c_str()))
 			ElementType = EuroScopePlugIn::SECTOR_ELEMENT_AIRSPACE;
-		if (type.compare("ARTC"))
+		if (startsWith("ARTC", type.c_str()))
 			ElementType = EuroScopePlugIn::SECTOR_ELEMENT_ARTC;
-		if (type.compare("FIX"))
+		if (startsWith("FIX", type.c_str()))
 			ElementType = EuroScopePlugIn::SECTOR_ELEMENT_FIX;
-		if (type.compare("FREETEXT"))
+		if (startsWith("FREETEXT", type.c_str()))
 			ElementType = EuroScopePlugIn::SECTOR_ELEMENT_FREE_TEXT;
-		if (type.compare("HIGHAIRWAY"))
+		if (startsWith("HIGHAIRWAY", type.c_str()))
 			ElementType = EuroScopePlugIn::SECTOR_ELEMENT_HIGH_AIRWAY;
-		if (type.compare("HIGHARTC"))
+		if (startsWith("HIGHARTC", type.c_str()))
 			ElementType = EuroScopePlugIn::SECTOR_ELEMENT_HIGH_ARTC;
-		if (type.compare("INFO"))
+		if (startsWith("INFO", type.c_str()))
 			ElementType = EuroScopePlugIn::SECTOR_ELEMENT_INFO;
-		if (type.compare("LOWAIRWAY"))
+		if (startsWith("LOWAIRWAY", type.c_str()))
 			ElementType = EuroScopePlugIn::SECTOR_ELEMENT_LOW_AIRWAY;
-		if (type.compare("LOWARTC"))
+		if (startsWith("LOWARTC", type.c_str()))
 			ElementType = EuroScopePlugIn::SECTOR_ELEMENT_LOW_ARTC;
-		if (type.compare("NDB"))
+		if (startsWith("NDB", type.c_str()))
 			ElementType = EuroScopePlugIn::SECTOR_ELEMENT_NDB;
-		if (type.compare("NUMBER"))
+		if (startsWith("NUMBER", type.c_str()))
 			ElementType = EuroScopePlugIn::SECTOR_ELEMENT_NUMBER;
-		if (type.compare("POSITION"))
+		if (startsWith("POSITION", type.c_str()))
 			ElementType = EuroScopePlugIn::SECTOR_ELEMENT_POSITION;
-		if (type.compare("RADARS"))
+		if (startsWith("RADARS", type.c_str()))
 			ElementType = EuroScopePlugIn::SECTOR_ELEMENT_RADARS;
-		if (type.compare("REGIONS"))
+		if (startsWith("REGIONS", type.c_str()))
 			ElementType = EuroScopePlugIn::SECTOR_ELEMENT_REGIONS;
-		if (type.compare("RUNWAY"))
+		if (startsWith("RUNWAY", type.c_str()))
 			ElementType = EuroScopePlugIn::SECTOR_ELEMENT_RUNWAY;
-		if (type.compare("SID"))
+		if (startsWith("SID", type.c_str()))
 			ElementType = EuroScopePlugIn::SECTOR_ELEMENT_SID;
-		if (type.compare("STAR"))
+		if (startsWith("STAR", type.c_str()))
 			ElementType = EuroScopePlugIn::SECTOR_ELEMENT_STAR;
-		if (type.compare("VOR"))
+		if (startsWith("VOR", type.c_str()))
 			ElementType = EuroScopePlugIn::SECTOR_ELEMENT_VOR;
-
+		
 		CSectorElement element;
 		for (element = GetPlugIn()->SectorFileElementSelectFirst(ElementType);
 			element.IsValid();
 			element = GetPlugIn()->SectorFileElementSelectNext(element, ElementType))
 		{
-			string element_name = element.GetName();
-
-			if (name.compare(element_name))
-				ZoomData.insert(std::pair<int, CSectorElement>(level, element)); break;
+			string t = element.GetName();
+			if (t == name) {
+				ZoomData.insert(std::make_pair(level, element));
+				break;
+			}
 		}
 	}
 }
@@ -111,7 +113,7 @@ bool CZoomClutterRadarScreen::OnCompileCommand(const char * sCommandLine) {
 	string t = "Current zoom level ";
 	t.append(std::to_string(currentLevel));
 
-	GetPlugIn()->DisplayUserMessage("Messages", "Zoom Clutter", t.c_str(), true, true, false, true, false);
+	GetPlugIn()->DisplayUserMessage("Message", "Zoom Clutter", t.c_str(), true, true, false, true, false);
 
 	return true;
 }
@@ -124,18 +126,49 @@ void CZoomClutterRadarScreen::OnRefresh(HDC hDC, int Phase) {
 	CPosition bottomLeft, TopRight;
 	GetDisplayArea(&bottomLeft, &TopRight);
 
-	if (bottomLeft.DistanceTo(saveBottomLeft) == 0.0)
-		return;
-
-	saveBottomLeft = bottomLeft;
-
 	int currentLevel = (int)bottomLeft.DistanceTo(TopRight);
 
-	for (multimap<int, CSectorElement>::iterator itr = ZoomData.begin(); itr != ZoomData.end();) {
-		ShowSectorFileElement(itr->second, itr->second.GetComponentName(0), (itr->first >= currentLevel));
+	if (currentLevel == saveLevel)
+		return;
+
+	saveLevel = currentLevel;
+
+	bool needRefresh = false;
+
+	for (auto it : ZoomData) {
+		bool displayElement = false;
+
+		CSectorElement Element = it.second;
+
+		if (it.first >= currentLevel) {
+			displayElement = true;
+			needRefresh = true;
+			CurrentlyDrawn.insert(std::make_pair(it.first, Element));
+		}
+
+		ShowSectorFileElement(Element, Element.GetComponentName(0), displayElement);
 	}
 
-	RefreshMapContent();
+	for (multimap<int, CSectorElement>::iterator it = CurrentlyDrawn.begin(); it != CurrentlyDrawn.end();) {
+		bool displayElement = true;
+
+		CSectorElement Element = it->second;
+
+		if (it->first < currentLevel) {
+			displayElement = false;
+			needRefresh = true;
+			CurrentlyDrawn.erase(it);
+
+			ShowSectorFileElement(Element, Element.GetComponentName(0), displayElement);
+		}
+		else {
+			++it;
+		}
+
+	}
+
+	if (needRefresh)
+		RefreshMapContent();
 }
 
 CZoomClutterRadarScreen::~CZoomClutterRadarScreen()
