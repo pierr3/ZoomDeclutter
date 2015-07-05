@@ -21,13 +21,13 @@ It will give you in chat the current zoom level.
 You'll then need to open your ASR file, and add the bottom of the a line like this:
 
 ```
-PLUGIN:Zoom Declutter PlugIn:ZOOM1:FREETEXT;LFPG VFR Points;20
-PLUGIN:Zoom Declutter PlugIn:ZOOM2:GEO;LFPB VPT 07;20
+PLUGIN:Zoom Declutter PlugIn:ZOOM1:FIX:RANUX:20
+PLUGIN:Zoom Declutter PlugIn:ZOOM2:GEO:LFPB VPT 07:20
 ```
 
 The format is as follows:
 ```
-PLUGIN:Zoom Declutter PlugIn:ZOOMX:TYPE;NAME;LEVEL
+PLUGIN:Zoom Declutter PlugIn:ZOOMX:TYPE:NAME:LEVEL
 ```
 
 ZOOMX: Replace the X with a number, starting from 1 and incrementing one by one

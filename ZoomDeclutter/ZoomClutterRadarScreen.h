@@ -3,6 +3,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <algorithm>
 #include <EuroScopePlugIn.h>
 
 using namespace EuroScopePlugIn;
@@ -38,9 +39,9 @@ public:
 	inline virtual void OnAsrContentToBeClosed(void) {
 		delete this;
 	};
-	
+
 	multimap<int, CSectorElement> ZoomData;
-	multimap<int, CSectorElement> CurrentlyDrawn;
+	vector<string> CurrentlyDrawn;
 	int saveLevel = 0;
 };
 

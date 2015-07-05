@@ -140,29 +140,24 @@ void CZoomClutterRadarScreen::OnRefresh(HDC hDC, int Phase) {
 
 		CSectorElement Element = it.second;
 
-		if (it.first >= currentLevel) {
+		string elementString = Element.GetName();
+		elementString.append(Element.GetComponentName(0));
+		elementString.append(std::to_string(it.first));
+
+		if (it.first >= currentLevel && 
+			std::find(CurrentlyDrawn.begin(), CurrentlyDrawn.end(), elementString) == CurrentlyDrawn.end()) {
 			displayElement = true;
 			needRefresh = true;
-			CurrentlyDrawn.insert(std::make_pair(it.first, Element));
-		}
-
-		ShowSectorFileElement(Element, Element.GetComponentName(0), displayElement);
-	}
-
-	for (multimap<int, CSectorElement>::iterator it = CurrentlyDrawn.begin(); it != CurrentlyDrawn.end();) {
-		bool displayElement = true;
-
-		CSectorElement Element = it->second;
-
-		if (it->first < currentLevel) {
-			displayElement = false;
-			needRefresh = true;
-			CurrentlyDrawn.erase(it);
-
+			CurrentlyDrawn.push_back(elementString);
 			ShowSectorFileElement(Element, Element.GetComponentName(0), displayElement);
 		}
-		else {
-			++it;
+
+		if (currentLevel > it.first &&
+			std::find(CurrentlyDrawn.begin(), CurrentlyDrawn.end(), elementString) != CurrentlyDrawn.end()) {
+			displayElement = false;
+			needRefresh = true;
+			CurrentlyDrawn.erase(std::find(CurrentlyDrawn.begin(), CurrentlyDrawn.end(), elementString));
+			ShowSectorFileElement(Element, Element.GetComponentName(0), displayElement);
 		}
 
 	}
